@@ -36,7 +36,7 @@ To get the array of filters:
 
 <pre><code>get_filters_response = afx.get_filters()
 puts get_filters_response.inspect
-</pre></code>
+</code></pre>
 
 ## Upload an image to the AviaryFX Service
 
