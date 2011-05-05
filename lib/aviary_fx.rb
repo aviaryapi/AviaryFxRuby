@@ -316,7 +316,7 @@ module AviaryFX
 
     def render_options(backgroundcolor, format, quality, scale, filepath, filterid, cols, rows, cellwidth, cellheight)
       params_hash = {
-        :calltype => "filteruse",
+        :calltype => "previewRender",
         :backgroundcolor => backgroundcolor,
         :format => format,
         :quality => quality,
