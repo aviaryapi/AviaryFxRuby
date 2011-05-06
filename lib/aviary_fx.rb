@@ -1,7 +1,7 @@
 require 'digest/md5'
-require 'rest-client' 
+require 'rest-client'
 require 'nokogiri'
-require 'json' 
+require 'json'
 
 
 # We open the Nokogiri::XML module to add a attributes2hash method for an XML node.
@@ -21,7 +21,7 @@ module Nokogiri::XML
   end
 end
 
-# This module contains classes that are representations of AviaryFX objects, such as 
+# This module contains classes that are representations of AviaryFX objects, such as
 # Filter, FilterParameter, Render, RenderParameter, RenderParameterCollection, etc.
 #
 # It also contains an API class to use as an API wrapper for the AviaryFX API.
@@ -31,19 +31,19 @@ module AviaryFX
 
   # Holds information about an AviaryFX filter, such as uid, label, description, and
   # an array of FilterParameter objects.
-  
+
   class FilterInfo
     attr_reader :uid, :label, :description
     # Array of FilterParameter objects
     attr_reader :parameters
-    
+
     def initialize(options = {})
       @uid = options[:uid]
-      @label = options[:label] 
+      @label = options[:label]
       @description = options[:description]
       @parameters = options[:parameters] || []
     end
-    
+
     def self.new_from_xml(xml_node)
       return self.new(:label => xml_node.attributes()["label"].value,
                       :uid => xml_node.attributes()["uid"].value,
@@ -55,13 +55,13 @@ module AviaryFX
   # Holds information about an AviaryFX FilterParameter, with properties such as
   # uid, id, type, min, max, and value, although all of these will not always
   # be present for a given filter parameter.
-  
+
   class FilterParameter
     attr_reader :uid, :id, :type, :min, :max, :value
     # All attributes available from the XML response from Aviary, including ones that may not
     # specifically be mentioned at the time of this writing.
     attr_reader :raw_attributes
-    
+
     def initialize(options = {})
       @uid = options[:uid]
       @id = options[:id]
@@ -71,32 +71,32 @@ module AviaryFX
       @value = options[:value]
       @raw_attributes = options
     end
-    
+
     def self.new_from_xml(xml_node)
       self.new(xml_node.attributes2hash)
     end
   end
-  
+
   # Holds information about an AviaryFX RenderOptionsGrid, including a URL for the grid
   # and an array of the renders in the grid.
-  
+
   class RenderOptionsGrid
     # Array of Render objects
     attr_reader :renders
     # String containing the URL to the rendered grid
     attr_reader :url
-    
+
     def initialize(options = {})
       @url = options[:url]
       @renders = options[:renders] || []
     end
-    
+
     def self.new_from_xml(xml_node)
       self.new(:url => xml_node.xpath("//ostrichrenderresponse/url").text,
                :renders => xml_node.xpath("//ostrichrenderresponse/renders/render").collect {|r| Render.new_from_xml(r) })
     end
   end
-  
+
   # Holds information about an AviaryFX Render, such as the row and column corresponding to its
   # position in its parent grid as well as a RenderParmeterCollection object.
   class Render
@@ -105,7 +105,7 @@ module AviaryFX
 
     # Column in the corresponding RenderOptionsGrid
     attr_reader :col
-    
+
     # RenderParameterCollection objection containing the render parameters for this render
     attr_reader :render_parameter_collection
 
@@ -114,19 +114,19 @@ module AviaryFX
       @col = options[:col]
       @render_parameter_collection = options[:render_parameter_collection] || RenderParameterCollection.new
     end
-  
+
     def self.new_from_xml(xml_node)
-      
+
       self.new(:row => xml_node.attributes()["row"].value,
                :col => xml_node.attributes()["col"].value,
                :render_parameter_collection => RenderParameterCollection.new_from_xml(xml_node.xpath("parameters")))
     end
   end
-  
+
   # A container class for holding an array of RenderParameter objects.  It is its own class
-  # primarily to provide an organized way to convert a set of RenderParameter objects into an XML 
+  # primarily to provide an organized way to convert a set of RenderParameter objects into an XML
   # representation and to convert JSON to a collection of RenderParameter objects.
-  
+
   class RenderParameterCollection
     # Array of RenderParameter objects
     attr_reader :parameters
@@ -134,21 +134,21 @@ module AviaryFX
     def initialize(options)
       @parameters = options[:parameters] || []
     end
-    
+
     def self.new_from_xml(xml_node)
       self.new(:parameters => xml_node.xpath("parameter").collect {|p| RenderParameter.new_from_xml(p)})
     end
-    
+
     # Create a collection of RenderParameter objects from a basic JSON string.
-    
+
     # Example: '{"parameters":[{"id":"Color Count","value":"14"},{"id":"Saturation","value":"1.0353452422505582"},{"id":"Curve Smoothing","value":"3.8117529663284664"},{"id":"Posterization","value":"9"},{"id":"Pattern Channel","value":"7"}]}'
     def self.new_from_json(json)
       p_hash = JSON.parse(json)
-      
+
       self.new(:parameters => p_hash["parameters"].collect {|p| RenderParameter.new(:uid => p["uid"], :id => p["id"], :value => p["value"]) })
-      
+
     end
-  
+
     def to_xml
       builder = Nokogiri::XML::Builder.new do |xml|
           xml.parameters {
@@ -157,29 +157,29 @@ module AviaryFX
             end
           }
       end
-  
+
       return Nokogiri::XML(builder.to_xml).root.to_s.gsub(/\n  /, "").gsub(/\n/, "")
-      
+
     end
 
   end
 
   # Holds information about an AviaryFX render parameter, such as id, uid, and value.
-  
+
   class RenderParameter
     attr_reader :id, :uid, :value
-    
+
     # all attributes provided in the XML response from the Aviary server, including ones
     # that may not be mentioned specifically at the time of this writing.
     attr_reader :raw_attributes
-    
+
     def initialize(options = {})
       @id = options[:id]
       @uid = options[:uid]
       @value = options[:value]
       @raw_attributes = options
     end
-    
+
     def self.new_from_xml(xml_node)
       self.new(xml_node.attributes2hash)
     end
@@ -203,7 +203,7 @@ module AviaryFX
   # Example:
   # afx.get_filters()
 
-  class API 
+  class API
 
     VERSION = "0.2"
     PLATFORM = "html"
@@ -227,11 +227,11 @@ module AviaryFX
     RENDER_URL    =   "/ostrich/render"
 
     # Initialize the API wrapper class
-    # 
+    #
     # Params:
     # +api_key+:: +String+ containing your API key
     # +api_secret+:: +String+ containing your API secret
-    
+
     def initialize(api_key, api_secret)
       @api_key = api_key
       @api_secret = api_secret
@@ -241,7 +241,7 @@ module AviaryFX
     #
     # Params:
     # +filename+:: +String+ containing the full local path to the file to upload
-    # 
+    #
     # Returns:
     # +Hash+ containing the URL on the server of the uploaded file.
 
@@ -260,7 +260,7 @@ module AviaryFX
     end
 
     # Renders image based on render parameters.
-    # 
+    #
     # Params:
     # +backgroundcolor+:: +String+ containing the background color
     # +format+:: +String+
@@ -274,7 +274,7 @@ module AviaryFX
     #
     # Returns:
     # +Hash+ containing the URL to the rendered image
-    
+
     def render(backgroundcolor, format, quality, scale, filepath, filterid, width, height, render_parameter_collection)
       params_hash = {
         :calltype => "filteruse",
@@ -337,9 +337,9 @@ module AviaryFX
     end
 
     # Gets a list of available filters.
-    # 
+    #
     # Returns:
-    # +Array+ of Filter objects. 
+    # +Array+ of Filter objects.
 
     def get_filters
       params_hash = {}
@@ -446,19 +446,19 @@ module AviaryFX
     # Returns:
     # +String+ containing the response from the server.
 
-    def request(uri, post_hash) 
+    def request(uri, post_hash)
       url = URI.parse(uri)
       req = Net::HTTP::Post.new(url.path)
       req.set_form_data(post_hash)
       sock = Net::HTTP.new(url.host, url.port)
       res = sock.start {|http| http.request(req)}
       return res.body
-    end  
+    end
 
 
     #
     # Returns the API signature for the params
-    # 
+    #
     # Params:
     # +params_hash+:: +Hash+ containing the base parameters to be sent to the server, not including the API signature
     #
@@ -472,7 +472,7 @@ module AviaryFX
       api_sig = Digest::MD5.hexdigest(string_to_md5)
       return api_sig
     end
-    
+
   end
 
 end
