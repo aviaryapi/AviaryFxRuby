@@ -1,4 +1,4 @@
-require 'aviary_fx'
+require File.join('..', 'lib', 'aviary_fx')
 
 # The following class contains methods
 # to get the public methods of the AviaryFX
