@@ -467,7 +467,7 @@ module AviaryFX
     #
 
     def get_api_signature(params_hash)
-      params_string = params_hash.sort.collect {|e| "#{e.first}#{e.last}" }.join("")
+      params_string = params_hash.to_a.sort { |a,b| a.first.to_s <=> b.first.to_s }.collect {|e| "#{e.first}#{e.last}" }.join("")
       string_to_md5 =  @api_secret + params_string
       api_sig = Digest::MD5.hexdigest(string_to_md5)
       return api_sig
