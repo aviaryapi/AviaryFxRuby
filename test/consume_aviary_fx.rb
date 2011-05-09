@@ -1,3 +1,4 @@
+require 'rubygems'
 require File.join('..', 'lib', 'aviary_fx')
 
 # The following class contains methods
